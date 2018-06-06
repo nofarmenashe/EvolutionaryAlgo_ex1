@@ -68,7 +68,7 @@ class BackpropArgs:
         return random.uniform(0.001, 0.02)
 
     def choose_epochs(self):
-        return random.randint(1, 10)
+        return random.randint(1, 20)
 
 
 class BackPropModel:
@@ -138,4 +138,5 @@ class BackPropModel:
 
     def test(self, dataset):
         test_results = [(np.argmax(self.forward(x[0])), np.argmax(x[1])) for x in dataset]
+        # print(test_results)
         return float(sum([int(x == y) for (x, y) in test_results])) / len(dataset) * 100
