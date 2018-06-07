@@ -43,6 +43,7 @@ if __name__ == "__main__":
         print(backprop_args.hidden_layers_sizes)
         backProp = BackPropModel(backprop_args)
 
+
         backProp.train(train_data, val_data)
         print("Test Accuracy:", str(backProp.test(test_data)) + "%")
         print("Train Accuracy:", str(backProp.test(train_data)) + "%")
