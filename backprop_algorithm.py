@@ -86,7 +86,7 @@ class BackPropModel:
     def forward(self, x):
         x = np.reshape(x, (len(x), 1))
         for w, b in zip(self.weights, self.biases):
-            x = self.args.f(w.dot(x)) + b
+            x = self.args.f(w.dot(x) + b)
 
         return softmax(x)
 
