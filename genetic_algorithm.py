@@ -46,6 +46,8 @@ class GAModel:
         # print(str(accuracy) + "%")
         return accuracy
 
+    def calculate_accuracy(self, nn_chromosome, train_dataset):
+
     def replication(self, population_list):
         top_permutaions = population_list[:int(self.replication_rate * len(population_list))]
         return [fitnessed_permutation[0] for fitnessed_permutation in top_permutaions]
@@ -153,17 +155,19 @@ class GAModel:
     def train(self, train_dataset, val_dataset, test_dataset):
         best_fitness = (None, 0)
         generation_number = 1
-        train_set = train_dataset[:100]
+        # train_set = train_dataset[:100]
         while best_fitness[1] < 98:
             population_fitnesses = []
             new_population = []
 
             # calculate fitnesses
+            train_set = random.sample(train_dataset, 100)
             population_fitnesses.extend([(nn, self.fitness(nn, train_set))
                                          for nn in self.population])
 
             population_fitnesses.sort(key=operator.itemgetter(1))
             population_fitnesses = population_fitnesses[::-1]
+
             best_fitness = population_fitnesses[0]
 
             print([p[1] for p in population_fitnesses])

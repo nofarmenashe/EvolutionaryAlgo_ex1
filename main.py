@@ -33,6 +33,8 @@ def load_datasets():
 if __name__ == "__main__":
     print("loading dataset")
     train_data, val_data, test_data = load_datasets()
+    input_size = 28 * 28
+    output_size = 10
 
     # part = sys.argv[1]
 
@@ -50,12 +52,23 @@ if __name__ == "__main__":
 
     # if part == 'b':
     print("start GA")
-    nn_args = BackpropArgs(28 * 28, 10, 0.01, [512, 256], 30)
+    learning_rate = 0.01
+    hidden_layers_sizes = [200, 100]
+    epochs = 30
+
+    nn_args = BackpropArgs(input_size, output_size, learning_rate, hidden_layers_sizes, epochs)
     NNModel = BackPropModel(nn_args)
-    GA_args = GAArgs(100, 0.4, 0.7, 1, NNModel)
+
+    population_size = 50
+    replication_rate = 0.4
+    mutation_rate = 0.7
+    elitism_rate = 1
+
+    GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
     print(GA_args.population_size, GA_args.replication_rate, GA_args.mutation_rate, GA_args.elitism_rate)
+
     GA = GAModel(GA_args)
 
     random.shuffle(train_data)
-    random.shuffle(test_data)
+    # random.shuffle(test_data)
     GA.train(train_data, val_data, test_data)
