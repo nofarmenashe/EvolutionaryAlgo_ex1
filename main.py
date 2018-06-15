@@ -1,5 +1,5 @@
 import numpy as np
-from mnist import MNIST
+import sklearn.datasets
 import sys
 from numpy import random
 from backprop_algorithm import BackpropArgs, BackPropModel
@@ -16,18 +16,16 @@ def load_datasets():
     training = 50000
     val = 10000
 
-    mnist_data = MNIST('samples')
+    mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
 
-    train_val_data = mnist_data.load_training()
-    test_data = mnist_data.load_testing()
+    data = list(zip(mnist.data, mnist.target))
+    random.shuffle(data)
+    data = [(x[0] / 255.0, transform_target(x[1])) for x in data]
+    # data = [(x[0].astype(bool).astype(int), transform_target(x[1])) for x in data]
 
-    random.shuffle(train_val_data)
-    train_val_data = [(x[0] / 255.0, transform_target(x[1])) for x in train_val_data]
-    test_data = [(x[0] / 255.0, transform_target(x[1])) for x in test_data]
-
-    train_data = train_val_data[:training]
-    val_data = train_val_data[training:]
-    print(train_data.shape, val_data.shape, test_data.shape, train_data[0])
+    train_data = data[:training]
+    val_data = data[training:training + val]
+    test_data = data[training + val:]
 
     return train_data, val_data, test_data
 
@@ -53,7 +51,7 @@ if __name__ == "__main__":
         print("start GA")
         nn_args = BackpropArgs(28 * 28, 10, 0.01, [240, 120], 30)
         NNModel = BackPropModel(nn_args)
-        GA_args = GAArgs(30, 0.1, 0.2, 0.1, NNModel)
+        GA_args = GAArgs(5, 0.2, 0.15, 0.2, NNModel)
         print(GA_args.population_size, GA_args.mutation_rate, GA_args.replication_rate, GA_args.elitism_rate)
         GA = GAModel(GA_args)
         GA.train(train_data, val_data, test_data)
