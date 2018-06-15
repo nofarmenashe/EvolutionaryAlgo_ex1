@@ -127,10 +127,10 @@ class GAModel:
         return mutated_population
 
     def train(self, train_dataset, val_dataset, test_dataset):
-        best_fitness = (None, 0)
+        best_fitness = (None, 0, 0)
         generation_number = 1
         small_train_set = train_dataset[:100]
-        while best_fitness[1] < 98:
+        while best_fitness[2] < 98:
             nn_and_fitness = []
             new_population = []
 
@@ -170,10 +170,14 @@ class GAModel:
             # elitism - select top
             new_population.extend(elit_chromosomes)
 
+            self.population = new_population
+
+            if generation_number % 10 == 0:
+                print("Test Set Accuracy: ", self.fitness(best_fitness[0], test_dataset)[2])
+
             print("Finished Generation: ", generation_number)
             generation_number += 1
 
-            self.population = new_population
 
-        accuracy = best_fitness[0].test(test_dataset)
+        accuracy = self.fitness(best_fitness[0], test_dataset)
         print("Test Acuuracy: " + str(accuracy))
