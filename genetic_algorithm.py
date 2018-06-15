@@ -46,8 +46,9 @@ class GAModel:
         return accuracy
 
     def replication(self, population_list):
-        replicated_chromosomes = random.sample(population_list, k=int(self.replication_rate * self.population_size))
-        return replicated_chromosomes
+        # replicated_chromosoms = random.sample(population_list, k=int(self.replication_rate * self.population_size))
+        replicated_chromosoms = population_list[:int(self.replication_rate * self.population_size)]
+        return replicated_chromosoms
 
     def choose_parents(self, population_fitness_tuples):
         networks, fitnesses = zip(*population_fitness_tuples)
@@ -59,22 +60,21 @@ class GAModel:
         chosen_indeces = np.random.choice(range(len(networks)), 2, p=fitnesses)
         return networks[chosen_indeces[0]], networks[chosen_indeces[1]]
 
-    def breed_parents(self, p1, p2):
-        p1_w, p1_b = p1
-        p2_w, p2_b = p2
-        p1_w, p1_b, p2_w, p2_b = [list(x) for x in [p1_w, p1_b, p2_w, p2_b]]
+    def breed_parents(self, parent1, parent2):
+        parent1_weights, parent1_biases = parent1
+        parent2_weights, parent2_biases = parent2
         child_weights = []
         child_biases = []
-        for w1, w2 in zip(p1_w, p2_w):
+        for w1, w2 in zip(parent1_weights, parent2_weights):
             new_w = np.zeros(w1.shape)
-            for i in range(len(w1)):
-                new_w[i] = random.choice([w1[i], w2[i]])
+            for i in range(w1.shape[1]):
+                new_w[:, i] += random.choice([w1[:, i], w2[:, i]])
             child_weights.append(new_w)
 
-        for b1, b2 in zip(p1_b, p2_b):
+        for b1, b2 in zip(parent1_biases, parent2_biases):
             new_b = np.zeros(b1.shape)
-            for i in range(len(b1)):
-                new_b[i] = random.choice([b1[i], b2[i]])
+            for i in range(b1.shape[1]):
+                new_b += random.choice([b1, b2])
             child_biases.append(new_b)
 
         return child_weights, child_biases
@@ -91,15 +91,11 @@ class GAModel:
         new_b = []
         chromosome_w, chromosome_b = chromosome
         for w in chromosome_w:
-            mask = np.random.choice([0, 1], p=[1-self.mutation_rate, self.mutation_rate], size=w.shape).astype(np.bool)
-            values = w + np.random.normal(loc=0.0, scale=0.1, size=w.shape)
-            np.place(w, mask, values)
+            w += np.random.normal(loc=0.0, scale=0.05, size=w.shape)
             new_w.append(w)
 
         for b in chromosome_b:
-            mask = np.random.choice([0, 1], p=[1 - self.mutation_rate, self.mutation_rate], size=b.shape).astype(np.bool)
-            values = b + np.random.normal(loc=0.0, scale=0.1, size=b.shape)
-            np.place(b, mask, values)
+            b += np.random.normal(loc=0.0, scale=0.05, size=b.shape)
             new_b.append(b)
         return (new_w, new_b)
 
@@ -112,36 +108,35 @@ class GAModel:
     def train(self, train_dataset, val_dataset, test_dataset):
         best_fitness = (None, 0)
         while best_fitness[1] < 98:
-            population_fitnesses = []
+            nn_and_fitness = []
             new_population = []
 
             # train_batch = random.sample(train_dataset, k=100)
             random.shuffle(train_dataset)
-            random.shuffle(test_dataset)
 
             # calculate fitnesses
-            population_fitnesses.extend([(nn, self.fitness(nn, train_dataset[:10000]))
+            nn_and_fitness.extend([(nn, self.fitness(nn, train_dataset[:1000]))
                                          for nn in self.population])
 
-            population_fitnesses.sort(key=operator.itemgetter(1))
-            population_fitnesses = population_fitnesses[::-1]
-            best_fitness = population_fitnesses[0]
-            print([p[1] for p in population_fitnesses])
+            nn_and_fitness.sort(key=operator.itemgetter(1))
+            nn_and_fitness = nn_and_fitness[::-1]
+            best_fitness = nn_and_fitness[0]
+            print([p[1] for p in nn_and_fitness])
 
             num_of_elit = int(self.elitism_rate * self.population_size)
 
             elit_chromosomes = [population_fitness[0] for population_fitness
-                                in population_fitnesses[:num_of_elit]]
+                                in nn_and_fitness[:num_of_elit]]
 
             # replication - select randomly from the rest
             rest_of_population = [population_fitness[0] for population_fitness
-                                  in population_fitnesses[int(self.elitism_rate * self.population_size):]]
+                                  in nn_and_fitness[int(self.elitism_rate * self.population_size):]]
             replications = self.replication(rest_of_population)
             new_population.extend(replications)
 
             # crossover - breed random parents
             num_of_chromosomes_left = self.population_size - len(new_population) - num_of_elit
-            crossover_children = self.crossover(population_fitnesses, num_of_chromosomes_left)
+            crossover_children = self.crossover(nn_and_fitness, num_of_chromosomes_left)
             new_population.extend(crossover_children)
 
             # mutation - mutate new population
@@ -150,7 +145,7 @@ class GAModel:
             # elitism - select top
             new_population.extend(elit_chromosomes)
 
-            print("Finish Generation")
+            # print("Finish Generation")
             self.population = new_population
 
         accuracy = best_fitness[0].test(test_dataset)
