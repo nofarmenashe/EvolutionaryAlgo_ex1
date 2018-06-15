@@ -123,7 +123,10 @@ class GAModel:
     def population_mutation(self, population):
         mutated_population = []
         for chromosome in population:
-            mutated_population.append(self.mutate(chromosome))
+            if calculate_probability(self.mutation_rate):
+                mutated_population.append(self.mutate(chromosome))
+            else:
+                mutated_population.append(chromosome)
         return mutated_population
 
     def train(self, train_dataset, val_dataset, test_dataset):
