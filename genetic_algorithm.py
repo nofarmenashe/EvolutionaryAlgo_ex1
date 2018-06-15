@@ -1,6 +1,7 @@
 import operator
 import random
 import numpy as np
+import copy
 
 from backprop_algorithm import BackPropModel, BackpropArgs
 
@@ -46,9 +47,10 @@ class GAModel:
         return accuracy
 
     def replication(self, population_list):
-        # replicated_chromosoms = random.sample(population_list, k=int(self.replication_rate * self.population_size))
-        replicated_chromosoms = population_list[:int(self.replication_rate * self.population_size)]
-        return replicated_chromosoms
+        top_permutaions = population_list[:int(self.replication_rate * len(population_list))]
+        return [fitnessed_permutation[0] for fitnessed_permutation in top_permutaions]
+        # replicated_chromosomes = random.sample(population_list, k=int(self.replication_rate * self.population_size))
+        # return replicated_chromosomes
 
     def choose_parents(self, population_fitness_tuples):
         networks, fitnesses = zip(*population_fitness_tuples)
@@ -69,7 +71,13 @@ class GAModel:
             new_w = np.zeros(w1.shape)
             for i in range(w1.shape[1]):
                 new_w[:, i] += random.choice([w1[:, i], w2[:, i]])
+
             child_weights.append(new_w)
+        # for parent1_weight, w2 in zip(parent1_weights, parent2_weights):
+        #     new_w = np.zeros(parent1_weight.shape)
+        #     for i in range(len(parent1_weight)):
+        #         new_w[i] = random.choice([parent1_weight[i], w2[i]])
+        #     child_weights.append(new_w)
 
         for b1, b2 in zip(parent1_biases, parent2_biases):
             new_b = np.zeros(b1.shape)
@@ -97,7 +105,8 @@ class GAModel:
         for b in chromosome_b:
             b += np.random.normal(loc=0.0, scale=0.05, size=b.shape)
             new_b.append(b)
-        return (new_w, new_b)
+
+        return new_w, new_b
 
     def population_mutation(self, population):
         mutated_population = []
@@ -107,6 +116,8 @@ class GAModel:
 
     def train(self, train_dataset, val_dataset, test_dataset):
         best_fitness = (None, 0)
+        generation_number = 1
+        train_set = train_dataset[:100]
         while best_fitness[1] < 98:
             nn_and_fitness = []
             new_population = []
@@ -123,10 +134,8 @@ class GAModel:
             best_fitness = nn_and_fitness[0]
             print([p[1] for p in nn_and_fitness])
 
-            num_of_elit = int(self.elitism_rate * self.population_size)
-
-            elit_chromosomes = [population_fitness[0] for population_fitness
-                                in nn_and_fitness[:num_of_elit]]
+            elit_chromosomes = [copy.deepcopy(population_fitness[0]) for population_fitness
+                                in nn_and_fitness[:self.elitism_rate]]
 
             # replication - select randomly from the rest
             rest_of_population = [population_fitness[0] for population_fitness
@@ -145,7 +154,9 @@ class GAModel:
             # elitism - select top
             new_population.extend(elit_chromosomes)
 
-            # print("Finish Generation")
+            print("Finished Generation: ", generation_number)
+            generation_number += 1
+
             self.population = new_population
 
         accuracy = best_fitness[0].test(test_dataset)
