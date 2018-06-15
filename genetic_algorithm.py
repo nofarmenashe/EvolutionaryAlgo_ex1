@@ -27,6 +27,13 @@ class GAModel:
         self.elitism_rate = args.elitism_rate
         self.nn = args.nn
         self.population = self.init_population()
+        self.rouletteProbs = self.init_roulette_probs()
+
+    def init_roulette_probs(self):
+        sum = np.sum(range(1, self.population_size + 1))
+        fitnesses = [float(i) / sum for i in range(1, self.population_size + 1)]
+        fitnesses = fitnesses[::-1]
+        return fitnesses
 
     def init_population(self):
         population = []
@@ -44,7 +51,7 @@ class GAModel:
         new_nn.biases = list(biases)
 
         loss, success = new_nn.calculate_loss_and_success(train_dataset)
-        return new_nn, loss, success
+        return nn_chromosome, loss, success
 
         # weights, biases = nn_chromosome
         # new_nn = BackPropModel(self.nn.args)
@@ -61,13 +68,10 @@ class GAModel:
         # return replicated_chromosomes
 
     def choose_parents(self, population_fitness_tuples):
-        networks, fitnesses = zip(*population_fitness_tuples)
+        networks = [nn_loss_accuracy[0] for nn_loss_accuracy in population_fitness_tuples]
         networks = list(networks)
-        fitnesses = list(fitnesses)
 
-        sum_fitnesses = np.sum(fitnesses)
-        fitnesses = [float(fitness) / sum_fitnesses for fitness in fitnesses]
-        chosen_indeces = np.random.choice(range(len(networks)), 2, p=fitnesses)
+        chosen_indeces = np.random.choice(range(len(networks)), 2, p=self.rouletteProbs)
         return networks[chosen_indeces[0]], networks[chosen_indeces[1]]
 
     def breed_parents(self, parent1, parent2):
@@ -125,7 +129,7 @@ class GAModel:
     def train(self, train_dataset, val_dataset, test_dataset):
         best_fitness = (None, 0)
         generation_number = 1
-        # train_set = train_dataset[:100]
+        small_train_set = train_dataset[:100]
         while best_fitness[1] < 98:
             nn_and_fitness = []
             new_population = []
@@ -138,11 +142,13 @@ class GAModel:
             # chromosome = (nn, loss, accuracy)
             nn_and_fitness.extend([self.fitness(nn, sample_trainset) for nn in self.population])
 
-            nn_and_fitness.sort(key=operator.itemgetter(1))
-            # nn_and_fitness = nn_and_fitness[::-1]
+            nn_and_fitness.sort(key=operator.itemgetter(2))
+            nn_and_fitness = nn_and_fitness[::-1]
+            print("Accuracy: ", [format(p[2], '.2f') for p in nn_and_fitness])
 
+            nn_and_fitness.sort(key=operator.itemgetter(1))
+            print("loss: ", [format(p[1], '.2f') for p in nn_and_fitness])
             best_fitness = nn_and_fitness[0]
-            print([format(p[2], '.2f') for p in nn_and_fitness])
 
             elit_chromosomes = [copy.deepcopy(nn_and_fitness[0]) for nn_and_fitness
                                 in nn_and_fitness[:self.elitism_rate]]

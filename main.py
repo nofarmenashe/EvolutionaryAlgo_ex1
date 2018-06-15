@@ -53,15 +53,15 @@ if __name__ == "__main__":
     # if part == 'b':
     print("start GA")
     learning_rate = 0.01
-    hidden_layers_sizes = [200, 100]
-    epochs = 30
+    hidden_layers_sizes = [100, 50]
+    epochs = 1
 
     nn_args = BackpropArgs(input_size, output_size, learning_rate, hidden_layers_sizes, epochs)
     NNModel = BackPropModel(nn_args)
 
     population_size = 50
-    replication_rate = 0.4
-    mutation_rate = 0.7
+    replication_rate = 0.2
+    mutation_rate = 0.05
     elitism_rate = 1
 
     GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
