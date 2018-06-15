@@ -60,8 +60,8 @@ if __name__ == "__main__":
     NNModel = BackPropModel(nn_args)
 
     population_size = 50
-    replication_rate = 0.2
-    mutation_rate = 0.05
+    replication_rate = 0.1
+    mutation_rate = 0.1
     elitism_rate = 1
 
     GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
@@ -70,5 +70,4 @@ if __name__ == "__main__":
     GA = GAModel(GA_args)
 
     random.shuffle(train_data)
-    # random.shuffle(test_data)
     GA.train(train_data, val_data, test_data)
