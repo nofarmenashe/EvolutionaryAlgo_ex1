@@ -126,7 +126,7 @@ class GAModel:
             random.shuffle(train_dataset)
 
             # calculate fitnesses
-            nn_and_fitness.extend([(nn, self.fitness(nn, train_dataset[:1000]))
+            nn_and_fitness.extend([(nn, self.fitness(nn, train_dataset[:200]))
                                          for nn in self.population])
 
             nn_and_fitness.sort(key=operator.itemgetter(1))
@@ -144,7 +144,7 @@ class GAModel:
             new_population.extend(replications)
 
             # crossover - breed random parents
-            num_of_chromosomes_left = self.population_size - len(new_population) - num_of_elit
+            num_of_chromosomes_left = self.population_size - len(new_population) - self.elitism_rate
             crossover_children = self.crossover(nn_and_fitness, num_of_chromosomes_left)
             new_population.extend(crossover_children)
 
