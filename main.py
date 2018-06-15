@@ -1,5 +1,5 @@
 import numpy as np
-import sklearn.datasets
+import mnist
 import sys
 from numpy import random
 from backprop_algorithm import BackpropArgs, BackPropModel
@@ -16,16 +16,16 @@ def load_datasets():
     training = 50000
     val = 10000
 
-    mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
+    mnist_data = mnist.MNIST('./data')
 
-    data = list(zip(mnist.data, mnist.target))
-    random.shuffle(data)
-    data = [(x[0] / 255.0, transform_target(x[1])) for x in data]
-    # data = [(x[0].astype(bool).astype(int), transform_target(x[1])) for x in data]
+    train_x, train_y = mnist_data.load_training()
+    test_x, test_y = mnist_data.load_testing()
+    train_val_data = [(np.array(x) / 255.0, transform_target(y)) for x, y in zip(train_x, train_y)]
+    test_data = [(np.array(x) / 255.0, transform_target(y)) for x, y in zip(test_x, test_y)]
+    random.shuffle(train_val_data)
 
-    train_data = data[:training]
-    val_data = data[training:training + val]
-    test_data = data[training + val:]
+    train_data = train_val_data[:training]
+    val_data = train_val_data[training:]
 
     return train_data, val_data, test_data
 
