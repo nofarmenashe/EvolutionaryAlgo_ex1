@@ -35,13 +35,24 @@ class GAModel:
         fitnesses = fitnesses[::-1]
         return fitnesses
 
+    def xeiverFormula(self, n, m):
+        x = np.sqrt(6.0 / (n + m))
+        y = (n, m)
+        if (n == 1 or m == 1):
+            y = (n * m, 1)
+        return np.random.uniform(-x, x, y)
+
     def init_population(self):
         population = []
-        biases = np.array([np.zeros((y, 1)) for y in self.nn.layers[1:]])
         for i in range(self.population_size):
-            weights = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, x))
-                                for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
-            population.append((weights, biases))
+           weights = np.array([self.xeiverFormula(y, x)
+                    for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
+           biases = np.array([self.xeiverFormula(y, 1) for y in self.nn.layers[1:]])
+           # weights = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, x))
+           #                     for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
+           #  biases = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, 1)) for y in self.nn.layers[1:]])
+
+           population.append((weights, biases))
         return population
 
     def fitness(self, nn_chromosome, train_dataset):
@@ -139,7 +150,7 @@ class GAModel:
 
             # train_batch = random.sample(train_dataset, k=100)
             # random.shuffle(train_dataset)
-            sample_trainset = random.sample(train_dataset, 200)
+            sample_trainset = random.sample(train_dataset, 500)
 
             # calculate fitnesses
             # chromosome = (nn, loss, accuracy)

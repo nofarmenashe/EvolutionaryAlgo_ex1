@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # if part == 'b':
     print("start GA")
     learning_rate = 0.01
-    hidden_layers_sizes = [100, 50]
+    hidden_layers_sizes = [256, 128]
     epochs = 1
 
     nn_args = BackpropArgs(input_size, output_size, learning_rate, hidden_layers_sizes, epochs)
