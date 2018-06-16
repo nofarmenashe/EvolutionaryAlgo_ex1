@@ -53,15 +53,15 @@ if __name__ == "__main__":
     # if part == 'b':
     print("start GA")
     learning_rate = 0.01
-    hidden_layers_sizes = [256, 128]
+    hidden_layers_sizes = [128, 64]
     epochs = 1
 
     nn_args = BackpropArgs(input_size, output_size, learning_rate, hidden_layers_sizes, epochs)
     NNModel = BackPropModel(nn_args)
 
-    population_size = 50
-    replication_rate = 0.08
-    mutation_rate = 0.15
+    population_size = 100
+    replication_rate = 0.1
+    mutation_rate = 0.05
     elitism_rate = 2
 
     GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
@@ -70,4 +70,5 @@ if __name__ == "__main__":
     GA = GAModel(GA_args)
 
     random.shuffle(train_data)
+
     GA.train(train_data, val_data, test_data)

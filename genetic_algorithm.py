@@ -28,6 +28,18 @@ class GAModel:
         self.nn = args.nn
         self.population = self.init_population()
         self.rouletteProbs = self.init_roulette_probs()
+        self.mutation_probs = self.set_mutation_probs()
+
+    def set_mutation_probs(self):
+        start = 0.01
+        end = 0.05
+        step = float(end - start) / self.population_size
+
+        probs = []
+        while start < end:
+            probs.append(start)
+            start = step + start
+        return probs
 
     def init_roulette_probs(self):
         sum = np.sum(range(1, self.population_size + 1))
@@ -62,7 +74,10 @@ class GAModel:
         new_nn.biases = list(biases)
 
         loss, success = new_nn.calculate_loss_and_success(train_dataset)
-        return nn_chromosome, loss, success
+
+        fitness = loss
+
+        return nn_chromosome, loss, success, fitness
 
         # weights, biases = nn_chromosome
         # new_nn = BackPropModel(self.nn.args)
@@ -117,28 +132,57 @@ class GAModel:
             children.append(self.breed_parents(p1, p2))
         return children
 
-    def mutate(self, chromosome):
+    # def mutate(self, chromosome):
+    #     new_w = []
+    #     new_b = []
+    #     chromosome_w, chromosome_b = chromosome
+    #     for w in chromosome_w:
+    #         w += np.random.normal(loc=0.0, scale=0.01, size=w.shape)
+    #         new_w.append(w)
+    #
+    #     for b in chromosome_b:
+    #         b += np.random.normal(loc=0.0, scale=0.01, size=b.shape)
+    #         new_b.append(b)
+    #
+    #     return new_w, new_b
+
+    def mutate(self, chromosome, mutation_prob):
         new_w = []
         new_b = []
         chromosome_w, chromosome_b = chromosome
         for w in chromosome_w:
-            w += np.random.normal(loc=0.0, scale=0.01, size=w.shape)
+            for i in range(w.shape[0]):
+                for j in range(w.shape[1]):
+                    if calculate_probability(mutation_prob):
+                        w[i, j] += np.random.normal(loc=0.0, scale=0.001)
+            # w += np.random.normal(loc=0.0, scale=0.01, size=w.shape)
             new_w.append(w)
 
         for b in chromosome_b:
-            b += np.random.normal(loc=0.0, scale=0.01, size=b.shape)
+            for i in range(b.shape[0]):
+                if calculate_probability(mutation_prob):
+                    b[i] += np.random.normal(loc=0.0, scale=0.001)
             new_b.append(b)
 
         return new_w, new_b
 
     def population_mutation(self, population):
         mutated_population = []
-        for chromosome in population:
-            if calculate_probability(self.mutation_rate):
-                mutated_population.append(self.mutate(chromosome))
+        for i, chromosome in enumerate(population):
+            if i < self.replication_rate * self.population_size:
+                mutated_population.append(self.mutate(chromosome, self.mutation_probs[i]))
             else:
-                mutated_population.append(chromosome)
+                mutated_population.append(self.mutate(chromosome, self.mutation_rate))
+
         return mutated_population
+
+        # mutated_population = []
+        # for chromosome in population:
+        #     if calculate_probability(self.mutation_rate):
+        #         mutated_population.append(self.mutate(chromosome))
+        #     else:
+        #         mutated_population.append(chromosome)
+        # return mutated_population
 
     def train(self, train_dataset, val_dataset, test_dataset):
         best_fitness = (None, 0, 0)
@@ -150,18 +194,18 @@ class GAModel:
 
             # train_batch = random.sample(train_dataset, k=100)
             # random.shuffle(train_dataset)
-            sample_trainset = random.sample(train_dataset, 500)
+            sample_trainset = random.sample(train_dataset, 200)
 
             # calculate fitnesses
-            # chromosome = (nn, loss, accuracy)
+            # chromosome = (nn, loss, accuracy, fitness)
             nn_and_fitness.extend([self.fitness(nn, sample_trainset) for nn in self.population])
 
             nn_and_fitness.sort(key=operator.itemgetter(2))
             nn_and_fitness = nn_and_fitness[::-1]
             print("Accuracy: ", [format(p[2], '.2f') for p in nn_and_fitness])
 
-            nn_and_fitness.sort(key=operator.itemgetter(1))
-            print("loss: ", [format(p[1], '.2f') for p in nn_and_fitness])
+            nn_and_fitness.sort(key=operator.itemgetter(3))
+            # print("loss: ", [format(p[3], '.2f') for p in nn_and_fitness])
             best_fitness = nn_and_fitness[0]
 
             elit_chromosomes = [copy.deepcopy(nn_and_fitness[0]) for nn_and_fitness
@@ -188,9 +232,6 @@ class GAModel:
 
             if generation_number % 10 == 0:
                 print("Test Set Accuracy: ", self.fitness(best_fitness[0], test_dataset)[2])
-
-            if generation_number % 50 == 0:
-                print([w[0][0] for w, b in self.population])
 
             print("Finished Generation: ", generation_number)
             generation_number += 1
