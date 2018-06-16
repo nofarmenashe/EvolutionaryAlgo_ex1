@@ -86,7 +86,7 @@ class BackPropModel:
     def forward(self, x):
         x = np.reshape(x, (len(x), 1))
         for w, b in zip(self.weights, self.biases):
-            x = self.args.f(w.dot(x)) + b
+            x = self.args.f(w.dot(x) + b)
 
         return softmax(x)
 
@@ -140,3 +140,21 @@ class BackPropModel:
         test_results = [(np.argmax(self.forward(x[0])), np.argmax(x[1])) for x in dataset]
         # print(test_results)
         return float(sum([int(x == y) for (x, y) in test_results])) / len(dataset) * 100
+
+    def calculate_loss_and_success(self, dataset):
+        loss = 0
+        success = 0
+        for data in dataset:
+            x = data[0]
+            y = np.argmax(data[1])
+
+            prediction = self.forward(x)
+            prediction_label = np.argmax(prediction)
+
+            loss += -np.log(prediction[y])
+            if prediction_label == y:
+                success += 1
+
+        average_loss = float(loss) / len(dataset)
+        success = float(success) / len(dataset) * 100
+        return average_loss, success

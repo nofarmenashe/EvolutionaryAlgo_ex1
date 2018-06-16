@@ -1,5 +1,5 @@
 import numpy as np
-import sklearn.datasets
+import mnist
 import sys
 from numpy import random
 from backprop_algorithm import BackpropArgs, BackPropModel
@@ -16,16 +16,16 @@ def load_datasets():
     training = 50000
     val = 10000
 
-    mnist = sklearn.datasets.fetch_mldata('MNIST original', data_home='./data')
+    mnist_data = mnist.MNIST('./data')
 
-    data = list(zip(mnist.data, mnist.target))
-    random.shuffle(data)
-    data = [(x[0] / 255.0, transform_target(x[1])) for x in data]
-    # data = [(x[0].astype(bool).astype(int), transform_target(x[1])) for x in data]
+    train_x, train_y = mnist_data.load_training()
+    test_x, test_y = mnist_data.load_testing()
+    train_val_data = [(np.array(x) / 255.0, transform_target(y)) for x, y in zip(train_x, train_y)]
+    test_data = [(np.array(x) / 255.0, transform_target(y)) for x, y in zip(test_x, test_y)]
+    random.shuffle(train_val_data)
 
-    train_data = data[:training]
-    val_data = data[training:training + val]
-    test_data = data[training + val:]
+    train_data = train_val_data[:training]
+    val_data = train_val_data[training:]
 
     return train_data, val_data, test_data
 
@@ -33,6 +33,8 @@ def load_datasets():
 if __name__ == "__main__":
     print("loading dataset")
     train_data, val_data, test_data = load_datasets()
+    input_size = 28 * 28
+    output_size = 10
 
     # part = sys.argv[1]
 
@@ -43,15 +45,29 @@ if __name__ == "__main__":
     #     print(backprop_args.hidden_layers_sizes)
     #     backProp = BackPropModel(backprop_args)
     #
+    #
     #     backProp.train(train_data, val_data)
     #     print("Test Accuracy:", str(backProp.test(test_data)) + "%")
     #     print("Train Accuracy:", str(backProp.test(train_data)) + "%")
-    #
+
     # if part == 'b':
     print("start GA")
-    nn_args = BackpropArgs(28 * 28, 10, 0.01, [240, 120], 30)
+    learning_rate = 0.01
+    hidden_layers_sizes = [256, 128]
+    epochs = 1
+
+    nn_args = BackpropArgs(input_size, output_size, learning_rate, hidden_layers_sizes, epochs)
     NNModel = BackPropModel(nn_args)
-    GA_args = GAArgs(30, 0.4, 0.7, 0.1, NNModel)
-    print(GA_args.population_size, GA_args.mutation_rate, GA_args.replication_rate, GA_args.elitism_rate)
+
+    population_size = 50
+    replication_rate = 0.08
+    mutation_rate = 0.15
+    elitism_rate = 2
+
+    GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
+    print(GA_args.population_size, GA_args.replication_rate, GA_args.mutation_rate, GA_args.elitism_rate)
+
     GA = GAModel(GA_args)
+
+    random.shuffle(train_data)
     GA.train(train_data, val_data, test_data)
