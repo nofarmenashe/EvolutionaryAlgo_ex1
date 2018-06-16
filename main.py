@@ -60,9 +60,9 @@ if __name__ == "__main__":
     NNModel = BackPropModel(nn_args)
 
     population_size = 50
-    replication_rate = 0.1
-    mutation_rate = 0.1
-    elitism_rate = 1
+    replication_rate = 0.08
+    mutation_rate = 0.15
+    elitism_rate = 2
 
     GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)
     print(GA_args.population_size, GA_args.replication_rate, GA_args.mutation_rate, GA_args.elitism_rate)

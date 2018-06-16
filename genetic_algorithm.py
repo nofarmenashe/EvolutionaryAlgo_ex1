@@ -7,7 +7,7 @@ from backprop_algorithm import BackPropModel, BackpropArgs
 
 
 def calculate_probability(p):
-    return random.random() >= 1-p
+    return random.random() >= 1 - p
 
 
 class GAArgs:
@@ -45,14 +45,14 @@ class GAModel:
     def init_population(self):
         population = []
         for i in range(self.population_size):
-           weights = np.array([self.xeiverFormula(y, x)
-                    for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
-           biases = np.array([self.xeiverFormula(y, 1) for y in self.nn.layers[1:]])
-           # weights = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, x))
-           #                     for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
-           #  biases = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, 1)) for y in self.nn.layers[1:]])
+            weights = np.array([self.xeiverFormula(y, x)
+                                for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
+            biases = np.array([self.xeiverFormula(y, 1) for y in self.nn.layers[1:]])
+            # weights = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, x))
+            #                     for x, y in list(zip(self.nn.layers[:-1], self.nn.layers[1:]))])
+            # biases = np.array([np.random.normal(loc=0.0, scale=0.1, size=(y, 1)) for y in self.nn.layers[1:]])
 
-           population.append((weights, biases))
+            population.append((weights, biases))
         return population
 
     def fitness(self, nn_chromosome, train_dataset):
@@ -92,9 +92,8 @@ class GAModel:
         child_biases = []
         for w1, w2 in zip(parent1_weights, parent2_weights):
             new_w = np.zeros(w1.shape)
-            for i in range(w1.shape[1]):
-                new_w[:, i] += random.choice([w1[:, i], w2[:, i]])
-
+            for i in range(w1.shape[0]):
+                new_w[i, :] += random.choice([w1[i, :], w2[i, :]])
             child_weights.append(new_w)
         # for parent1_weight, w2 in zip(parent1_weights, parent2_weights):
         #     new_w = np.zeros(parent1_weight.shape)
@@ -104,8 +103,9 @@ class GAModel:
 
         for b1, b2 in zip(parent1_biases, parent2_biases):
             new_b = np.zeros(b1.shape)
-            for i in range(b1.shape[1]):
-                new_b += random.choice([b1, b2])
+            for i in range(b1.shape[0]):
+                new_b[i, :] += random.choice([b1[i, :], b2[i, :]])
+            # print(new_b)
             child_biases.append(new_b)
 
         return child_weights, child_biases
@@ -122,11 +122,11 @@ class GAModel:
         new_b = []
         chromosome_w, chromosome_b = chromosome
         for w in chromosome_w:
-            w += np.random.normal(loc=0.0, scale=0.05, size=w.shape)
+            w += np.random.normal(loc=0.0, scale=0.01, size=w.shape)
             new_w.append(w)
 
         for b in chromosome_b:
-            b += np.random.normal(loc=0.0, scale=0.05, size=b.shape)
+            b += np.random.normal(loc=0.0, scale=0.01, size=b.shape)
             new_b.append(b)
 
         return new_w, new_b
@@ -189,9 +189,11 @@ class GAModel:
             if generation_number % 10 == 0:
                 print("Test Set Accuracy: ", self.fitness(best_fitness[0], test_dataset)[2])
 
+            if generation_number % 50 == 0:
+                print([w[0][0] for w, b in self.population])
+
             print("Finished Generation: ", generation_number)
             generation_number += 1
-
 
         accuracy = self.fitness(best_fitness[0], test_dataset)
         print("Test Acuuracy: " + str(accuracy))
