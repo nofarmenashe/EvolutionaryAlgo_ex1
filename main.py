@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     population_size = 100
     replication_rate = 0.1
-    mutation_rate = 0.05
+    mutation_rate = 0.1
     elitism_rate = 2
 
     GA_args = GAArgs(population_size, replication_rate, mutation_rate, elitism_rate, NNModel)

@@ -154,14 +154,14 @@ class GAModel:
             for i in range(w.shape[0]):
                 for j in range(w.shape[1]):
                     if calculate_probability(mutation_prob):
-                        w[i, j] += np.random.normal(loc=0.0, scale=0.001)
+                        w[i, j] += np.random.normal(loc=0.0, scale=0.05)
             # w += np.random.normal(loc=0.0, scale=0.01, size=w.shape)
             new_w.append(w)
 
         for b in chromosome_b:
             for i in range(b.shape[0]):
                 if calculate_probability(mutation_prob):
-                    b[i] += np.random.normal(loc=0.0, scale=0.001)
+                    b[i] += np.random.normal(loc=0.0, scale=0.05)
             new_b.append(b)
 
         return new_w, new_b
@@ -184,17 +184,27 @@ class GAModel:
         #         mutated_population.append(chromosome)
         # return mutated_population
 
+    def write_results_to_file(self, fittest_chromosome, test_set, filename):
+        weights, biases = fittest_chromosome
+        new_nn = BackPropModel(self.nn.args)
+        new_nn.weights = list(weights)
+        new_nn.biases = list(biases)
+
+        new_nn.write_result_to_file(test_set, filename)
+
     def train(self, train_dataset, val_dataset, test_dataset):
+        fittest_chromosome = (None, 0, 0)
         best_fitness = (None, 0, 0)
         generation_number = 1
-        small_train_set = train_dataset[:100]
-        while best_fitness[2] < 98:
+        test_set_accuracy = 0
+
+        while test_set_accuracy < 98 and generation_number < 8000:
             nn_and_fitness = []
             new_population = []
 
             # train_batch = random.sample(train_dataset, k=100)
             # random.shuffle(train_dataset)
-            sample_trainset = random.sample(train_dataset, 200)
+            sample_trainset = random.sample(train_dataset, 1000)
 
             # calculate fitnesses
             # chromosome = (nn, loss, accuracy, fitness)
@@ -230,11 +240,17 @@ class GAModel:
 
             self.population = new_population
 
-            if generation_number % 10 == 0:
-                print("Test Set Accuracy: ", self.fitness(best_fitness[0], test_dataset)[2])
+            if generation_number % 2 == 0:
+                test_set_accuracy = self.fitness(best_fitness[0], test_dataset)[2]
+                print("Test Set Accuracy: ", test_set_accuracy)
+
+                if fittest_chromosome[2] < test_set_accuracy:
+                    fittest_chromosome = best_fitness
 
             print("Finished Generation: ", generation_number)
             generation_number += 1
 
-        accuracy = self.fitness(best_fitness[0], test_dataset)
-        print("Test Acuuracy: " + str(accuracy))
+        accuracy = self.fitness(fittest_chromosome[0], test_dataset)[2]
+        print("Test Accuracy: " + str(accuracy))
+
+        self.write_results_to_file(fittest_chromosome[0], test_dataset, "test.pred")

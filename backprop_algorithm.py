@@ -158,3 +158,17 @@ class BackPropModel:
         average_loss = float(loss) / len(dataset)
         success = float(success) / len(dataset) * 100
         return average_loss, success
+
+    def write_result_to_file(self, test_set, filename):
+        i = 0
+
+        with open('test.pred', 'w') as predictions_file:
+            for x in test_set:
+                prediction = (np.argmax(self.forward(x[0])))
+                # prediction = get_prediction_class(prediction)
+
+                predictions_file.write(str(int(prediction)))
+                if i != len(test_set) - 1:
+                    predictions_file.write("\n")
+
+                i += 1
